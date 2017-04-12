@@ -47,9 +47,9 @@ get_policy_divisions <- function(id = 40, key = mykey) {
   
 }
 
-divisions = get_policy_divisions()
+#divisions = get_policy_divisions()
 
-write.csv(divisions, file = "data/policy_divisions.csv", row.names = F)
+#write.csv(divisions, file = "data/policy_divisions.csv", row.names = F)
 
 
 #get comparisons----------------------------------------------------------------
@@ -100,8 +100,49 @@ get_people_comparisons <- function(id = 40, key = mykey) {
   
 }
 
-comparisons = get_people_comparisons()
+#comparisons = get_people_comparisons()
 
-write.csv(comparisons, file = 'data/people_comparisons.csv', row.names = F)
+#write.csv(comparisons, file = 'data/people_comparisons.csv', row.names = F)
 
-rm(divisions, comparisons)
+#get personal votes for all policy divisions------------------------------------
+
+get_personal_votes <- function(divisions_ids, key = mykey) {
+  
+  all_votes = data.frame()
+  
+  for (i in divisions_ids) {
+    
+    request = GET(url = paste0('https://rada4you.org/api/v1/divisions/',
+                               i, '.json'),
+                  query = list(key = key))
+    
+    if(status_code(request) == 200) {
+      
+      response = content(request)
+      
+      votes = ldply(response$votes, 'data.frame')
+      
+      votes$id = response$id
+      
+      votes$date = response$date
+      
+      votes$clock_time = as.character(response$clock_time)
+      
+      all_votes <- rbind.data.frame(all_votes, votes)
+      
+      Sys.sleep(2)
+      
+    }
+    
+    
+  }
+  
+  return(all_votes)
+  
+}
+
+votes <- get_personal_votes(divisions_ids = policy_divisions$division.id)
+
+#write.csv(votes, file = 'data/personal_votes.csv', row.names = F)
+
+#rm(divisions, comparisons, votes)
